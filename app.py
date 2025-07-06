@@ -111,6 +111,7 @@ if st.sidebar.button("Predict"):
                         last_input = np.array(temp_input).reshape(1, -1)
                         yhat = model.predict(last_input)[0]
                         temp_input.extend([yhat])
+                        temp_input = temp_input[1:] # Ensure temp_input maintains fixed size
                         future_predictions.append([yhat])
                     i = i + 1
                 
