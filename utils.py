@@ -3,9 +3,10 @@ import pandas as pd
 from alpha_vantage.timeseries import TimeSeries
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
+import streamlit as st
 
-# Replace with your Alpha Vantage API key
-ALPHA_VANTAGE_API_KEY = "YOUR_ALPHA_VANTAGE_API_KEY" 
+# Get Alpha Vantage API key from Streamlit secrets
+ALPHA_VANTAGE_API_KEY = st.secrets["ALPHA_VANTAGE_API_KEY"]
 
 def fetch_stock_data(ticker, start_date, end_date):
     """
@@ -34,7 +35,7 @@ def fetch_stock_data(ticker, start_date, end_date):
         
         return df.to_frame(name='Close')
     except Exception as e:
-        print(f"Error fetching data for {ticker}: {e}")
+        st.error(f"Error fetching data for {ticker}: {e}. Please check your API key and internet connection.")
         return None
 
 def preprocess_data(df, time_step=1):
