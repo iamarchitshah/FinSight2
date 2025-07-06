@@ -23,10 +23,11 @@ def fetch_stock_data(ticker, start_date, end_date):
     """
     try:
         ts = TimeSeries(key=ALPHA_VANTAGE_API_KEY, output_format='pandas')
-        data, meta_data = ts.get_daily_adjusted(symbol=ticker, outputsize='full')
+        # Using TIME_SERIES_DAILY which is available on the free tier
+        data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
         
-        # Select '5. adjusted close' which is the closing price
-        df = data['5. adjusted close']
+        # Select '4. close' which is the closing price for TIME_SERIES_DAILY
+        df = data['4. close']
         df = df.iloc[::-1]  # Reverse to have oldest data first
         df.index = pd.to_datetime(df.index)
         
@@ -35,7 +36,7 @@ def fetch_stock_data(ticker, start_date, end_date):
         
         return df.to_frame(name='Close')
     except Exception as e:
-        st.error(f"Error fetching data for {ticker}: {e}. Please check your API key and internet connection.")
+        st.error(f"Error fetching data for {ticker}: {e}. Please check your API key and internet connection, or if the ticker symbol is valid.")
         return None
 
 def preprocess_data(df, time_step=1):
