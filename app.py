@@ -1,37 +1,39 @@
 # app.py 
 import streamlit as st
 import pandas as pd
+import numpy as np
 from datetime import date, timedelta
+import matplotlib.pyplot as plt
 
 from utils import fetch_stock_data, preprocess_data, create_dataset, ALPHA_VANTAGE_API_KEY
 from models import train_lstm_model, train_rnn_model, train_svm_model, train_random_forest_model, make_predictions, evaluate_model
 
+def main():
+    st.title("Stock Price Prediction App")
 
-st.title("Stock Price Prediction App")
+    st.sidebar.header("User Input")
+    ticker_symbol = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL)", "AAPL")
 
-st.sidebar.header("User Input")
-ticker_symbol = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL)", "AAPL")
+    # Date range for historical data
+    today = date.today()
+    start_date_default = today - timedelta(days=365 * 5) # 5 years of data
+    end_date_default = today - timedelta(days=30) # End 30 days ago to avoid recent incomplete data
 
-# Date range for historical data
-today = date.today()
-start_date_default = today - timedelta(days=365 * 5) # 5 years of data
-end_date_default = today - timedelta(days=30) # End 30 days ago to avoid recent incomplete data
+    start_date = st.sidebar.date_input("Start Date", start_date_default)
+    end_date = st.sidebar.date_input("End Date", end_date_default)
 
-start_date = st.sidebar.date_input("Start Date", start_date_default)
-end_date = st.sidebar.date_input("End Date", end_date_default)
+    model_choice = st.sidebar.selectbox(
+        "Select Prediction Model",
+        ("LSTM", "RNN", "SVM", "Random Forest")
+    )
 
-model_choice = st.sidebar.selectbox(
-    "Select Prediction Model",
-    ("LSTM", "RNN", "SVM", "Random Forest")
-)
+    future_days = st.sidebar.slider("Days to Predict into Future", 1, 30, 7)
 
-future_days = st.sidebar.slider("Days to Predict into Future", 1, 30, 7)
+    if st.sidebar.button("Predict"):    
+        if ALPHA_VANTAGE_API_KEY == "YOUR_ALPHA_VANTAGE_API_KEY":
+            st.error("Please replace 'YOUR_ALPHA_VANTAGE_API_KEY' in utils.py with your actual Alpha Vantage API key.")
+            return
 
-
-if st.sidebar.button("Predict"):    
-    if ALPHA_VANTAGE_API_KEY == "YOUR_ALPHA_VANTAGE_API_KEY":
-        st.error("Please replace 'YOUR_ALPHA_VANTAGE_API_KEY' in utils.py with your actual Alpha Vantage API key.")
-    else:
         st.subheader(f"Predicting {ticker_symbol} Stock Prices")
         
         # Fetch data
@@ -60,6 +62,10 @@ if st.sidebar.button("Predict"):
             
             st.success("Data preprocessed successfully!")
             
+            if len(X_train) == 0 or len(X_test) == 0:
+                st.warning("Not enough historical data available for the selected date range and time step to train and test the model. Please adjust the date range or reduce the time step.")
+                return
+
             # Train and predict based on model choice
             model = None
             with st.spinner(f"Training {model_choice} model..."):
@@ -105,9 +111,7 @@ if st.sidebar.button("Predict"):
                             temp_input.extend(yhat.tolist())
                             future_predictions.append(yhat)
                     else:
-                        # For SVM and Random Forest, we can't directly predict day by day like this
-                        # A simpler approach for demonstration:
-                        st.warning("Future prediction for SVM/Random Forest is a simplified extrapolation. For more accurate time-series forecasting with these models, consider different data preparation strategies.")
+                        # For SVM and Random Forest
                         last_input = np.array(temp_input).reshape(1, -1)
                         yhat = model.predict(last_input)[0]
                         temp_input.extend([yhat])
@@ -126,12 +130,11 @@ if st.sidebar.button("Predict"):
                 st.write(future_df)
                 
                 # Plotting
-                import matplotlib.pyplot as plt
                 fig, ax = plt.subplots(figsize=(12, 6))
                 ax.plot(stock_df.index, stock_df['Close'], label='Historical Prices')
                 
                 # Plot test predictions
-                train_data_len = len(stock_df) - len(y_test) # Adjust this if preprocess_data changes
+                train_data_len = len(stock_df) - len(y_test)
                 test_dates = stock_df.index[train_data_len:len(stock_df)]
                 ax.plot(test_dates, test_predict, label='Test Predictions')
                 
@@ -144,7 +147,5 @@ if st.sidebar.button("Predict"):
                 ax.legend()
                 st.pyplot(fig)
 
-            else:
-                st.error("Model training failed.")
-        else:
-            st.error("Could not fetch or process historical data. Please check the ticker symbol and date range, or your API key.") 
+if __name__ == "__main__":
+    main()
