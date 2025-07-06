@@ -1,0 +1,7 @@
+streamlit
+pandas
+numpy
+scikit-learn
+tensorflow # For Keras LSTM/RNN
+alpha_vantage
+matplotlib 
