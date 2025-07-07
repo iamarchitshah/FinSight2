@@ -84,8 +84,8 @@ ta
 
 **Shah Archit**  
 **Thakar Maitrey**  
-Charotar University of Science and Technology  
-Chandubhai S. Patel Institute of Technology  
+University: Charotar University of Science and Technology  
+Instiituute: Chandubhai S. Patel Institute of Technology  
 Department: Information Technology  
 Year: 3rd Year  
 Semester: 5  
