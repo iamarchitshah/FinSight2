@@ -9,24 +9,11 @@ import streamlit as st
 ALPHA_VANTAGE_API_KEY = st.secrets["ALPHA_VANTAGE_API_KEY"]
 
 def fetch_stock_data(ticker, start_date, end_date):
-    """
-    Fetches historical stock data from Alpha Vantage.
-    
-    Args:
-        ticker (str): Stock ticker symbol.
-        start_date (str): Start date in 'YYYY-MM-DD' format.
-        end_date (str): End date in 'YYYY-MM-DD' format.
-        
-    Returns:
-        pd.DataFrame: DataFrame with historical stock data,
-                      or None if an error occurs.
-    """
+   
     try:
         ts = TimeSeries(key=ALPHA_VANTAGE_API_KEY, output_format='pandas')
-        # Using TIME_SERIES_DAILY which is available on the free tier
         data, meta_data = ts.get_daily(symbol=ticker, outputsize='full')
         
-        # Select '4. close' which is the closing price for TIME_SERIES_DAILY
         df = data['4. close']
         df = df.iloc[::-1]  # Reverse to have oldest data first
         df.index = pd.to_datetime(df.index)
@@ -40,16 +27,7 @@ def fetch_stock_data(ticker, start_date, end_date):
         return None
 
 def preprocess_data(df, time_step=1):
-    """
-    Preprocesses the stock data for model training.
-    
-    Args:
-        df (pd.DataFrame): DataFrame with 'Close' prices.
-        time_step (int): Number of previous time steps to use as features.
-        
-    Returns:
-        tuple: Scaled data, MinMaxScaler object, X (features), y (labels).
-    """
+
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(df['Close'].values.reshape(-1, 1))
     
