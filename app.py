@@ -55,10 +55,17 @@ def main():
                 X_train, X_test = X[0:training_size], X[training_size:len(X)]
                 y_train, y_test = y[0:training_size], y[training_size:len(y)]
                 
-                # Reshape for LSTM/RNN
+                # ✅ Safe reshaping for LSTM/RNN
                 if model_choice in ["LSTM", "RNN"]:
-                    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
-                    X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+                    if X_train.ndim == 1:
+                        X_train = X_train.reshape(-1, 1, 1)
+                    elif X_train.ndim == 2:
+                        X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+
+                    if X_test.ndim == 1:
+                        X_test = X_test.reshape(-1, 1, 1)
+                    elif X_test.ndim == 2:
+                        X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
             
             st.success("Data preprocessed successfully!")
             
