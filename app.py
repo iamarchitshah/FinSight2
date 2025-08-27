@@ -16,8 +16,8 @@ def main():
 
     # Date range for historical data
     today = date.today()
-    start_date_default = today - timedelta(days=365 * 5) # 5 years of data
-    end_date_default = today - timedelta(days=30) # End 30 days ago to avoid recent incomplete data
+    start_date_default = today - timedelta(days=365 * 5)  # 5 years of data
+    end_date_default = today - timedelta(days=30)  # End 30 days ago to avoid recent incomplete data
 
     start_date = st.sidebar.date_input("Start Date", start_date_default)
     end_date = st.sidebar.date_input("End Date", end_date_default)
@@ -44,10 +44,17 @@ def main():
             st.success("Data fetched successfully!")
             st.write(f"Historical data from {start_date} to {end_date}")
             st.write(stock_df.head())
-            
+
+            st.write(f"Total data points: {len(stock_df)}")
+
+            # Dynamic time_step adjustment
+            time_step = 100
+            if len(stock_df) < time_step + 20:  # +20 buffer for train/test split
+                time_step = max(5, len(stock_df) // 3)
+                st.info(f"Adjusted time_step to {time_step} due to limited data.")
+
             # Preprocess data
             with st.spinner("Preprocessing data..."):
-                time_step = 100 # Can be adjusted or made user input
                 X, y, scaler, scaled_data = preprocess_data(stock_df, time_step)
                 
                 # Splitting into training and testing data
@@ -70,7 +77,7 @@ def main():
             st.success("Data preprocessed successfully!")
             
             if len(X_train) == 0 or len(X_test) == 0:
-                st.warning("Not enough historical data available for the selected date range and time step to train and test the model. Please adjust the date range or reduce the time step.")
+                st.warning("Still not enough historical data to train/test the model. Try a longer date range.")
                 return
 
             # Train and predict based on model choice
@@ -102,7 +109,7 @@ def main():
                 # Predict future N days
                 future_predictions = []
                 i = 0
-                while(i < future_days):
+                while i < future_days:
                     if model_choice in ["LSTM", "RNN"]:
                         if len(temp_input) > time_step:
                             last_input = np.array(temp_input[1:]).reshape(1, -1)
@@ -122,9 +129,9 @@ def main():
                         last_input = np.array(temp_input).reshape(1, -1)
                         yhat = model.predict(last_input)[0]
                         temp_input.extend([yhat])
-                        temp_input = temp_input[1:] # Ensure temp_input maintains fixed size
+                        temp_input = temp_input[1:]  # Ensure temp_input maintains fixed size
                         future_predictions.append([yhat])
-                    i = i + 1
+                    i += 1
                 
                 future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
                 
