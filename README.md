@@ -93,7 +93,7 @@ FinSight2/
 
 ## 🗓️ 7-Day Intern Work Plan  
 
-| Day | Intern A Focus                        | Intern B Focus                              |
+| Day | D24IT166 Focus                        | D24IT168 Focus                              |
 |-----|----------------------------------------|-----------------------------------------------|
 | 1   | Setup & repo exploration               | Environment setup & yfinance testing          |
 | 2   | Data fetching framework                | Technical indicator implementation            |
