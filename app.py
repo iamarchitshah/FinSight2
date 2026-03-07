@@ -22,7 +22,7 @@ def main():
     st.sidebar.header("User Input")
 
     ticker_symbol = st.sidebar.text_input(
-        "Enter Stock Ticker (Examples: AAPL, TSLA, MSFT)",
+        "Enter Stock Ticker (Example: AAPL, TSLA, MSFT)",
         "AAPL"
     ).strip().upper()
 
@@ -44,16 +44,16 @@ def main():
     if st.sidebar.button("Predict"):
 
         if ticker_symbol == "":
-            st.error("Please enter a valid stock ticker.")
+            st.error("Please enter a stock ticker.")
             return
 
         if ALPHA_VANTAGE_API_KEY == "YOUR_ALPHA_VANTAGE_API_KEY":
-            st.error("Please add your Alpha Vantage API key in Streamlit secrets.")
+            st.error("Please set your Alpha Vantage API key in secrets.")
             return
 
         st.subheader(f"Stock Prediction for {ticker_symbol}")
 
-        # Fetch data
+        # Fetch stock data
         with st.spinner("Fetching stock data..."):
             stock_df = fetch_stock_data(
                 ticker_symbol,
@@ -62,7 +62,7 @@ def main():
             )
 
         if stock_df is None or stock_df.empty:
-            st.error("No stock data available. Please check the ticker.")
+            st.error("No data found for this ticker.")
             return
 
         st.success("Data fetched successfully!")
@@ -72,7 +72,7 @@ def main():
 
         st.write(f"Total Data Points: {len(stock_df)}")
 
-        # Time step adjustment
+        # Dynamic timestep
         time_step = 60
         if len(stock_df) < time_step + 20:
             time_step = max(5, len(stock_df) // 3)
@@ -100,7 +100,7 @@ def main():
             st.warning("Not enough data to train the model.")
             return
 
-        # Train Model
+        # Train model
         model = None
 
         with st.spinner(f"Training {model_choice} model..."):
@@ -123,7 +123,7 @@ def main():
 
         st.success(f"{model_choice} model trained successfully!")
 
-        # Predictions
+        # Test predictions
         test_predict = make_predictions(model, X_test, scaler)
 
         rmse = evaluate_model(
@@ -133,8 +133,8 @@ def main():
 
         st.write(f"Model RMSE: {rmse:.4f}")
 
-        # Future prediction
-        last_data = scaled_data[len(scaled_data) - time_step:].reshape(1, -1)
+        # Prepare future prediction
+        last_data = scaled_data[-time_step:].reshape(1, -1)
 
         temp_input = list(last_data[0])
 
@@ -147,10 +147,7 @@ def main():
                 last_input = np.array(temp_input[-time_step:])
                 last_input = last_input.reshape(1, time_step, 1)
 
-                yhat = model.predict(last_input, verbose=0)[0]
-
-                temp_input.append(yhat)
-                future_predictions.append(yhat)
+                yhat = model.predict(last_input, verbose=0)[0][0]
 
             else:
 
@@ -158,8 +155,9 @@ def main():
 
                 yhat = model.predict(last_input)[0]
 
-                temp_input.append(yhat)
-                future_predictions.append([yhat])
+            temp_input.append(yhat)
+
+            future_predictions.append(float(yhat))
 
         future_predictions = scaler.inverse_transform(
             np.array(future_predictions).reshape(-1, 1)
@@ -182,22 +180,26 @@ def main():
         st.subheader("Future Predictions")
         st.dataframe(future_df)
 
-        # Plot
-        fig, ax = plt.subplots(figsize=(12,6))
+        # Plot results
+        fig, ax = plt.subplots(figsize=(12, 6))
 
-        ax.plot(stock_df.index, stock_df["Close"], label="Historical")
+        ax.plot(stock_df.index, stock_df["Close"], label="Historical Prices")
 
         test_dates = stock_df.index[-len(test_predict):]
 
-        ax.plot(test_dates, test_predict, label="Test Predictions")
+        ax.plot(
+            test_dates,
+            np.array(test_predict).flatten(),
+            label="Test Predictions"
+        )
 
         ax.plot(
             future_df.index,
             future_df["Predicted Close"],
-            label="Future Predictions"
+            label=f"Future Predictions ({future_days} days)"
         )
 
-        ax.set_title(f"{ticker_symbol} Stock Prediction")
+        ax.set_title(f"{ticker_symbol} Stock Price Prediction")
 
         ax.set_xlabel("Date")
         ax.set_ylabel("Price")
