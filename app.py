@@ -30,7 +30,7 @@ def main():
     future_days = st.sidebar.slider("Days to Predict into Future", 1, 30, 7)
 
     if st.sidebar.button("Predict"):    
-        if ALPHA_VANTAGE_API_KEY == f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=compact&apikey={API_KEY}":
+        if ALPHA_VANTAGE_API_KEY == 'YOUR_ALPHA_VANTAGE_API_KEY':
             st.error("Please replace 'YOUR_ALPHA_VANTAGE_API_KEY' in utils.py with your actual Alpha Vantage API key.")
             return
 
@@ -163,4 +163,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
